@@ -39,44 +39,44 @@ document.addEventListener('DOMContentLoaded', () => {
             isValid = false;
         }
 
-        // Custom Validation: Phone
+        // Custom Validation: Phone (India and UAE mobile numbers)
         const rawPhoneVal = phoneInput.value.trim();
-        // Remove spaces
-        let cleanPhone = rawPhoneVal.replace(/\s+/g, '');
-        // Remove allowed +91, 91, or 0 prefixes (even if combined like 091 or +910)
-        let prefixRemoved = true;
-        while (prefixRemoved && cleanPhone.length > 10) {
-            prefixRemoved = false;
-            if (cleanPhone.startsWith('+91')) {
-                cleanPhone = cleanPhone.substring(3);
-                prefixRemoved = true;
-            } else if (cleanPhone.startsWith('91')) {
-                cleanPhone = cleanPhone.substring(2);
-                prefixRemoved = true;
-            } else if (cleanPhone.startsWith('0')) {
-                cleanPhone = cleanPhone.substring(1);
-                prefixRemoved = true;
-            }
+        const cleanPhone = rawPhoneVal.replace(/[\s()-]/g, '');
+        let normalizedPhone = cleanPhone;
+        let phoneCountry = cleanPhone.length === 9 ? 'UAE' : 'India';
+
+        if (normalizedPhone.startsWith('+971')) {
+            normalizedPhone = normalizedPhone.substring(4);
+            phoneCountry = 'UAE';
+        } else if (normalizedPhone.startsWith('971')) {
+            normalizedPhone = normalizedPhone.substring(3);
+            phoneCountry = 'UAE';
+        } else if (normalizedPhone.startsWith('+91')) {
+            normalizedPhone = normalizedPhone.substring(3);
+        } else if (normalizedPhone.startsWith('91') && normalizedPhone.length === 12) {
+            normalizedPhone = normalizedPhone.substring(2);
+        } else if (normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
+            normalizedPhone = normalizedPhone.substring(1);
+            phoneCountry = 'UAE';
         }
 
-        if (!/^\d*$/.test(cleanPhone)) {
+        const validMobile = phoneCountry === 'UAE'
+            ? /^\d{9}$/.test(normalizedPhone)
+            : /^[6-9]\d{9}$/.test(normalizedPhone);
+
+        if (!/^\d+$/.test(normalizedPhone)) {
             phoneWrapper.classList.add('error');
             if (phoneError) {
                 phoneError.textContent = 'Mobile number should contain only digits.';
                 phoneError.classList.add('visible');
             }
             isValid = false;
-        } else if (cleanPhone.length !== 10) {
+        } else if (!validMobile) {
             phoneWrapper.classList.add('error');
             if (phoneError) {
-                phoneError.textContent = 'Mobile number should be exactly 10 digits (excluding country code).';
-                phoneError.classList.add('visible');
-            }
-            isValid = false;
-        } else if (!/^[6-9]/.test(cleanPhone)) {
-            phoneWrapper.classList.add('error');
-            if (phoneError) {
-                phoneError.textContent = 'Mobile number should start with 6, 7, 8, or 9.';
+                phoneError.textContent = phoneCountry === 'UAE'
+                    ? 'Enter a valid UAE mobile number (9 digits excluding country code).'
+                    : 'Enter a valid Indian mobile number (10 digits, excluding country code).';
                 phoneError.classList.add('visible');
             }
             isValid = false;
